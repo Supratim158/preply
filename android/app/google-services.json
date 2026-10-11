@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "944658048075",
+    "project_id": "preply-315f7",
+    "storage_bucket": "preply-315f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944658048075:android:2eae06d04356ca91b759ce",
+        "android_client_info": {
+          "package_name": "com.example.preply"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtQmgrQbIyuLRTWRFIPUKQOIJIm5kpJgk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

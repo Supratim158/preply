@@ -6,23 +6,72 @@ import 'package:preply/screens/home/homescreen.dart';
 import 'package:preply/screens/profile/profile_screen.dart';
 import 'package:preply/screens/reminders/reminder_screen.dart';
 import 'package:preply/screens/resume/resume_cheker_screen.dart';
+import 'package:preply/settings/settings.dart';
 
 import '../../widgets/animated_bg.dart';
+import '../constants/links.dart';
+import '../services/in_app_notification_service.dart';
+import 'home/components/notification_bottom_sheet.dart';
+import 'profile/services/push_notification_service.dart';
 
 class EntryScreen extends StatefulWidget {
   final dynamic token;
+  final int initialIndex;
 
   const EntryScreen({
     super.key,
     required this.token,
+    this.initialIndex = 0,
   });
+
+  static _EntryScreenState? _activeState;
+
+  static bool get hasActiveState =>
+      _activeState != null && _activeState!.mounted;
+
+  static void openTab(int index) {
+    if (_activeState != null && _activeState!.mounted) {
+      _activeState!._changeTab(index);
+    }
+  }
 
   @override
   State<EntryScreen> createState() => _EntryScreenState();
 }
 
 class _EntryScreenState extends State<EntryScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    EntryScreen._activeState = this;
+    _currentIndex = widget.initialIndex;
+    _initServices();
+  }
+
+  @override
+  void dispose() {
+    if (EntryScreen._activeState == this) {
+      EntryScreen._activeState = null;
+    }
+    super.dispose();
+  }
+
+  void _initServices() {
+    // Initialize in-app notification tracking
+    InAppNotificationService.initialize();
+
+    final tokenStr = widget.token?.toString();
+    if (tokenStr != null && tokenStr.isNotEmpty) {
+      PushNotificationService.initialize(
+        jwtToken: tokenStr,
+        backendUrl: appBaseUrl,
+      ).catchError((e) {
+        debugPrint('Push notification init error: $e');
+      });
+    }
+  }
 
   void _changeTab(int index) {
     if (index < 0 || index >= 5) return;
@@ -56,11 +105,7 @@ class _EntryScreenState extends State<EntryScreen> {
       case 0:
       // Home
         return [
-          _appBarIcon(
-            icon: Icons.notifications_none_rounded,
-            tooltip: 'Notifications',
-            onTap: _openNotifications,
-          ),
+          _notificationBellIcon(),
           _appBarIcon(
             icon: Icons.settings_outlined,
             tooltip: 'Settings',
@@ -149,15 +194,79 @@ class _EntryScreenState extends State<EntryScreen> {
     );
   }
 
-  // Placeholder actions.
-  // Connect these methods to your actual screens and features.
+  // ── Notification bell with live badge ──────────────────────────
+  Widget _notificationBellIcon() {
+    return ValueListenableBuilder<int>(
+      valueListenable: InAppNotificationService.unreadCountNotifier,
+      builder: (context, unreadCount, _) {
+        return IconButton(
+          tooltip: 'Notifications',
+          onPressed: _openNotifications,
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 23,
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF4D4F),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF001A42),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF4D4F).withOpacity(0.5),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 17,
+                      minHeight: 17,
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? '99+' : '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
+  // ── Open draggable notification sheet ──────────────────────────
   void _openNotifications() {
-    _showMessage('Notifications');
+    NotificationBottomSheet.show(
+      context,
+      onOpenReminder: (_) {
+        _changeTab(3); // Switch to Reminders tab
+      },
+    );
   }
 
   void _openSettings() {
-    _showMessage('Settings');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
   }
 
   void _uploadResume() {
@@ -217,14 +326,35 @@ class _EntryScreenState extends State<EntryScreen> {
                 elevation: 0,
                 scrolledUnderElevation: 0,
 
-                title: Text(
-                  _titles[_currentIndex],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                title: _currentIndex == 0
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            height: 32,
+                            width: 32,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Preply',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        _titles[_currentIndex],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
                 actions: _buildAppBarActions(),
               ),

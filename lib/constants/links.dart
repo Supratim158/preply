@@ -5,3 +5,6 @@ const String googleLoginUrl = "$appBaseUrl/google-login";
 const String verifyOtpUrl = "$appBaseUrl/verify-otp";
 const String resendOtpUrl = "$appBaseUrl/resend-otp";
 const String changePasswordUrl = "$appBaseUrl/change-password";
+const String remindersUrl = "$appBaseUrl/api/reminders";
+const String notificationsUrl = "$appBaseUrl/api/notification";
+const String userProfileUrl = "$appBaseUrl/api/users";

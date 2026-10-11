@@ -17,6 +17,7 @@ import '../../widgets/preply_logo.dart';
 import '../entry_screen.dart';
 import 'login_page.dart';
 import 'otp_verification_page.dart';
+import '../profile/services/push_notification_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -144,6 +145,13 @@ class _RegisterPageState extends State<RegisterPage> {
         } else {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', myToken);
+          PushNotificationService.initialize(
+            jwtToken: myToken,
+            backendUrl: appBaseUrl,
+          ).catchError((e) {
+            debugPrint('Push notification init error: $e');
+          });
+
           if (!mounted) return;
 
           showAppSnackBar(context, 'Signed in successfully! 🎉');

@@ -17,6 +17,7 @@ import '../../widgets/preply_logo.dart';
 import '../entry_screen.dart';
 import 'otp_verification_page.dart';
 import 'register_page.dart';
+import '../profile/services/push_notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -96,6 +97,13 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // If verification is true -> save token and open entry screen
           await prefs.setString('token', myToken);
+          PushNotificationService.initialize(
+            jwtToken: myToken,
+            backendUrl: appBaseUrl,
+          ).catchError((e) {
+            debugPrint('Push notification init error: $e');
+          });
+
           if (!mounted) return;
 
           Navigator.pushReplacement(
@@ -173,6 +181,13 @@ class _LoginPageState extends State<LoginPage> {
           );
         } else {
           await prefs.setString('token', myToken);
+          PushNotificationService.initialize(
+            jwtToken: myToken,
+            backendUrl: appBaseUrl,
+          ).catchError((e) {
+            debugPrint('Push notification init error: $e');
+          });
+
           if (!mounted) return;
 
           showAppSnackBar(context, 'Signed in successfully! 🎉');

@@ -11,6 +11,7 @@ import '../../widgets/auth_scaffold.dart';
 import '../../widgets/preply_logo.dart';
 import '../entry_screen.dart';
 import 'login_page.dart';
+import '../profile/services/push_notification_service.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String email;
@@ -76,6 +77,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         final String userToken = jsonResponse['userToken'] ?? widget.token ?? '';
         if (userToken.isNotEmpty) {
           await prefs.setString('token', userToken);
+          PushNotificationService.initialize(
+            jwtToken: userToken,
+            backendUrl: appBaseUrl,
+          ).catchError((e) {
+            debugPrint('Push notification init error: $e');
+          });
         }
         if (!mounted) return;
 
